@@ -21,6 +21,18 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Register Repositories
 builder.Services.AddScoped<IJobApplicationRepository, JobApplicationRepository>();
 
+// Allow React App (CORS)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
+});
+
 var app = builder.Build();
 
 // 2. Configure the HTTP Request Pipeline (The "Traffic Control")
@@ -34,6 +46,7 @@ if (app.Environment.IsDevelopment())
 // -------------------------
 
 app.UseHttpsRedirection();
+app.UseCors("AllowReactApp");
 app.UseAuthorization();
 app.MapControllers();
 
