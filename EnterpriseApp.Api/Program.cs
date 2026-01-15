@@ -1,4 +1,14 @@
+using EnterpriseApp.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Get the connection string
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Register the Database Context (UseSqlite)
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite(connectionString));
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
