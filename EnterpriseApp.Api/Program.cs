@@ -1,5 +1,7 @@
 using EnterpriseApp.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using EnterpriseApp.Application.Interfaces;
+using EnterpriseApp.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 // Register the Database Context (UseSqlite)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
+
+// Register Repositories
+builder.Services.AddScoped<IJobApplicationRepository, JobApplicationRepository>();
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
