@@ -11,13 +11,11 @@ public class JobApplicationsController : ControllerBase
 {
     private readonly IJobApplicationRepository _repository;
 
-    // Inject the Repository
     public JobApplicationsController(IJobApplicationRepository repository)
     {
         _repository = repository;
     }
 
-    // GET: api/JobApplications
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -25,7 +23,6 @@ public class JobApplicationsController : ControllerBase
         return Ok(applications);
     }
 
-    // GET: api/JobApplications/{id}
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
@@ -34,11 +31,9 @@ public class JobApplicationsController : ControllerBase
         return Ok(application);
     }
 
-    // POST: api/JobApplications
     [HttpPost]
     public async Task<IActionResult> Create(CreateJobApplicationDto dto)
     {
-        // 1. Map DTO to Entity (Manual mapping for now)
         var entity = new JobApplication
         {
             CompanyName = dto.CompanyName,
@@ -49,14 +44,30 @@ public class JobApplicationsController : ControllerBase
             Status = dto.Status
         };
 
-        // 2. Save to DB
         var id = await _repository.AddAsync(entity);
-
-        // 3. Return 201 Created
         return CreatedAtAction(nameof(GetById), new { id = id }, entity);
     }
 
-    // DELETE: api/JobApplications/{id}
+    // --- NEW: The Update Endpoint ---
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(Guid id, CreateJobApplicationDto dto)
+    {
+        var existing = await _repository.GetByIdAsync(id);
+        if (existing == null) return NotFound();
+
+        // Update fields
+        existing.CompanyName = dto.CompanyName;
+        existing.JobTitle = dto.JobTitle;
+        existing.JobUrl = dto.JobUrl;
+        existing.Location = dto.Location;
+        existing.SalaryRange = dto.SalaryRange;
+        existing.Status = dto.Status;
+
+        await _repository.UpdateAsync(existing);
+        return NoContent(); // 204 Success (No Content to return)
+    }
+    // --------------------------------
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {

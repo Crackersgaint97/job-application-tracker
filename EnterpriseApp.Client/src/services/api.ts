@@ -1,7 +1,6 @@
 import axios from 'axios';
-import type { JobApplication, CreateJobApplicationDto } from '../types'; // Added 'type' here
+import type { JobApplication, CreateJobApplicationDto } from '../types';
 
-// The URL of your .NET Backend
 const API_URL = 'http://localhost:5296/api/JobApplications';
 
 export const getApplications = async (): Promise<JobApplication[]> => {
@@ -13,6 +12,12 @@ export const createApplication = async (data: CreateJobApplicationDto): Promise<
     const response = await axios.post(API_URL, data);
     return response.data;
 };
+
+// --- NEW: Update Function ---
+export const updateApplication = async (id: string, data: CreateJobApplicationDto): Promise<void> => {
+    await axios.put(`${API_URL}/${id}`, data);
+};
+// ----------------------------
 
 export const deleteApplication = async (id: string): Promise<void> => {
     await axios.delete(`${API_URL}/${id}`);

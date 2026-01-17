@@ -2,15 +2,21 @@ import { useEffect, useState } from 'react';
 import { 
     Container, Typography, Paper, Table, TableBody, 
     TableCell, TableContainer, TableHead, TableRow, Chip, 
-    Button, Box 
+    Button, Box, IconButton 
 } from '@mui/material';
-import type { JobApplication } from '../types'; // <--- Note: "type" added here
-import { getApplications, deleteApplication } from '../services/api';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import type { JobApplication, CreateJobApplicationDto } from '../types';
+import { getApplications, createApplication, updateApplication, deleteApplication } from '../services/api';
+import JobDialog from './JobDialog';
 
 export default function Dashboard() {
     const [applications, setApplications] = useState<JobApplication[]>([]);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    
+    // Track which job is being edited (null = creating new)
+    const [editingJob, setEditingJob] = useState<JobApplication | null>(null);
 
-    // Load data when the page opens
     useEffect(() => {
         loadData();
     }, []);
@@ -24,10 +30,31 @@ export default function Dashboard() {
         }
     };
 
+    const handleAddNew = () => {
+        setEditingJob(null); // Clear editing state
+        setIsDialogOpen(true);
+    };
+
+    const handleEdit = (job: JobApplication) => {
+        setEditingJob(job); // Set the job to be edited
+        setIsDialogOpen(true);
+    };
+
+    const handleSave = async (data: CreateJobApplicationDto) => {
+        if (editingJob) {
+            // Update existing
+            await updateApplication(editingJob.id, data);
+        } else {
+            // Create new
+            await createApplication(data);
+        }
+        loadData(); // Refresh table
+    };
+
     const handleDelete = async (id: string) => {
-        if(confirm("Are you sure you want to delete this application?")) {
+        if(confirm("Are you sure?")) {
             await deleteApplication(id);
-            loadData(); // Refresh the list
+            loadData();
         }
     };
 
@@ -37,7 +64,11 @@ export default function Dashboard() {
                 <Typography variant="h4" component="h1" fontWeight="bold">
                     Job Application Tracker
                 </Typography>
-                <Button variant="contained" color="primary">
+                <Button 
+                    variant="contained" 
+                    color="primary"
+                    onClick={handleAddNew}
+                >
                     + New Application
                 </Button>
             </Box>
@@ -67,15 +98,25 @@ export default function Dashboard() {
                                 </TableCell>
                                 <TableCell>{app.location || 'Remote'}</TableCell>
                                 <TableCell align="right">
-                                    <Button color="error" onClick={() => handleDelete(app.id)}>
-                                        Delete
-                                    </Button>
+                                    <IconButton color="primary" onClick={() => handleEdit(app)} size="small">
+                                        <EditIcon />
+                                    </IconButton>
+                                    <IconButton color="error" onClick={() => handleDelete(app.id)} size="small">
+                                        <DeleteIcon />
+                                    </IconButton>
                                 </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <JobDialog 
+                open={isDialogOpen} 
+                initialData={editingJob || undefined}
+                onClose={() => setIsDialogOpen(false)} 
+                onSubmit={handleSave} 
+            />
         </Container>
     );
 }

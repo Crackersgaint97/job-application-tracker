@@ -2,11 +2,17 @@ using EnterpriseApp.Infrastructure.Persistence;
 using EnterpriseApp.Infrastructure.Repositories;
 using EnterpriseApp.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Add Services (The "Toolbox")
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // This allows the backend to understand "Applied" instead of "0"
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 // --- SWAGGER GENERATORS (These were missing/inactive) ---
 builder.Services.AddEndpointsApiExplorer();
