@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { JobApplication, CreateJobApplicationDto } from '../types';
 
-const API_URL = 'http://localhost:5296/api/JobApplications';
+const API_URL = 'https://ked-api-evc7dbf4g6etc3cm.southafricanorth-01.azurewebsites.net/api/JobApplications';
 
 export const getApplications = async (): Promise<JobApplication[]> => {
     const response = await axios.get(API_URL);
@@ -22,3 +22,6 @@ export const updateApplication = async (id: string, data: CreateJobApplicationDt
 export const deleteApplication = async (id: string): Promise<void> => {
     await axios.delete(`${API_URL}/${id}`);
 };
+
+
+//ked-api-evc7dbf4g6etc3cm.southafricanorth-01.azurewebsites.net

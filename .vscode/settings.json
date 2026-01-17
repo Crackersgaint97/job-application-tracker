@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/e8e97f24-6001-47f5-a7a7-ff44de11ed75/resourceGroups/EnterpriseApp-RG/providers/Microsoft.Web/sites/ked-api",
+    "appService.deploySubpath": "."
+}

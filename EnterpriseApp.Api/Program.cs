@@ -1,69 +1,55 @@
+using EnterpriseApp.Infrastructure;
 using EnterpriseApp.Infrastructure.Persistence;
-using EnterpriseApp.Infrastructure.Repositories;
-using EnterpriseApp.Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Add Services (The "Toolbox")
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // This allows the backend to understand "Applied" instead of "0"
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
-
-// --- SWAGGER GENERATORS (These were missing/inactive) ---
+// 1. Add Services (The "Backpack")
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-// --------------------------------------------------------
 
-// Database Connection (SQLite)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// --- DATABASE CONNECTION ---
+// This reads the "DefaultConnection" string from Azure Settings
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-if (builder.Environment.IsDevelopment())
-{
-    // Local Laptop: Use SQLite
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlite(connectionString));
-}
-else
-{
-    // Cloud (Production): Use SQL Server
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(connectionString));
-}
-// Register Repositories
-builder.Services.AddScoped<IJobApplicationRepository, JobApplicationRepository>();
-
-// Allow React App (CORS)
+// --- ALLOW FRONTEND ACCESS (CORS) ---
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:5173")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()   // Allow localhost, Azure, anyone
+              .AllowAnyMethod()   // Allow GET, POST, PUT, DELETE
+              .AllowAnyHeader();  // Allow any security headers
+    });
 });
 
 var app = builder.Build();
 
-// 2. Configure the HTTP Request Pipeline (The "Traffic Control")
-
-// --- ENABLE SWAGGER UI ---
-if (app.Environment.IsDevelopment())
+// --- START: Auto-Create Database Tables ---
+using (var scope = app.Services.CreateScope())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate();
 }
-// -------------------------
+// --- END: Auto-Create Database Tables ---
+
+// 2. Configure the Pipeline (The "Door Security")
+
+// --- IMPORTANT: CORS MUST BE HERE ---
+// This applies the "AllowAll" policy we defined above
+app.UseCors("AllowAll");
+
+// Enable Swagger in ALL environments (including Azure)
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
-app.UseCors("AllowReactApp");
+
 app.UseAuthorization();
+
+// This opens the API endpoints
 app.MapControllers();
 
 app.Run();
