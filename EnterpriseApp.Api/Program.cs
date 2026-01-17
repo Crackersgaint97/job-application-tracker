@@ -21,9 +21,19 @@ builder.Services.AddSwaggerGen();
 
 // Database Connection (SQLite)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
 
+if (builder.Environment.IsDevelopment())
+{
+    // Local Laptop: Use SQLite
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlite(connectionString));
+}
+else
+{
+    // Cloud (Production): Use SQL Server
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlServer(connectionString));
+}
 // Register Repositories
 builder.Services.AddScoped<IJobApplicationRepository, JobApplicationRepository>();
 

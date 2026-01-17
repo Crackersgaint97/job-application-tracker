@@ -2,20 +2,25 @@ import { useEffect, useState } from 'react';
 import { 
     Container, Typography, Paper, Table, TableBody, 
     TableCell, TableContainer, TableHead, TableRow, Chip, 
-    Button, Box, IconButton 
+    Button, Box, IconButton, useTheme, useMediaQuery
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import type { JobApplication, CreateJobApplicationDto } from '../types';
 import { getApplications, createApplication, updateApplication, deleteApplication } from '../services/api';
 import JobDialog from './JobDialog';
+import Navbar from './Navbar';
+import SummaryCards from './SummaryCards';
 
 export default function Dashboard() {
     const [applications, setApplications] = useState<JobApplication[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    
-    // Track which job is being edited (null = creating new)
     const [editingJob, setEditingJob] = useState<JobApplication | null>(null);
+    
+    // Responsive Hooks
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     useEffect(() => {
         loadData();
@@ -31,24 +36,22 @@ export default function Dashboard() {
     };
 
     const handleAddNew = () => {
-        setEditingJob(null); // Clear editing state
+        setEditingJob(null);
         setIsDialogOpen(true);
     };
 
     const handleEdit = (job: JobApplication) => {
-        setEditingJob(job); // Set the job to be edited
+        setEditingJob(job);
         setIsDialogOpen(true);
     };
 
     const handleSave = async (data: CreateJobApplicationDto) => {
         if (editingJob) {
-            // Update existing
             await updateApplication(editingJob.id, data);
         } else {
-            // Create new
             await createApplication(data);
         }
-        loadData(); // Refresh table
+        loadData();
     };
 
     const handleDelete = async (id: string) => {
@@ -59,64 +62,92 @@ export default function Dashboard() {
     };
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                <Typography variant="h4" component="h1" fontWeight="bold">
-                    Job Application Tracker
-                </Typography>
-                <Button 
-                    variant="contained" 
-                    color="primary"
-                    onClick={handleAddNew}
-                >
-                    + New Application
-                </Button>
-            </Box>
+        <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', pb: 4 }}>
+            <Navbar />
+            
+            {/* UPDATED: maxWidth={false} means "Use 100% width" */}
+            <Container maxWidth={false} sx={{ mt: { xs: 2, md: 4 }, px: { xs: 2, md: 4 } }}>
+                
+                <SummaryCards applications={applications} />
 
-            <TableContainer component={Paper} elevation={3}>
-                <Table>
-                    <TableHead sx={{ bgcolor: '#f5f5f5' }}>
-                        <TableRow>
-                            <TableCell><strong>Company</strong></TableCell>
-                            <TableCell><strong>Role</strong></TableCell>
-                            <TableCell><strong>Status</strong></TableCell>
-                            <TableCell><strong>Location</strong></TableCell>
-                            <TableCell align="right"><strong>Actions</strong></TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {applications.map((app) => (
-                            <TableRow key={app.id}>
-                                <TableCell>{app.companyName}</TableCell>
-                                <TableCell>{app.jobTitle}</TableCell>
-                                <TableCell>
-                                    <Chip 
-                                        label={app.status} 
-                                        color={app.status === 'Offer' ? 'success' : 'default'} 
-                                        size="small" 
-                                    />
-                                </TableCell>
-                                <TableCell>{app.location || 'Remote'}</TableCell>
-                                <TableCell align="right">
-                                    <IconButton color="primary" onClick={() => handleEdit(app)} size="small">
-                                        <EditIcon />
-                                    </IconButton>
-                                    <IconButton color="error" onClick={() => handleDelete(app.id)} size="small">
-                                        <DeleteIcon />
-                                    </IconButton>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                <Paper sx={{ p: { xs: 2, md: 3 }, mb: 3, borderRadius: 2 }} elevation={0}>
+                    <Box 
+                        display="flex" 
+                        flexDirection={isMobile ? 'column' : 'row'} 
+                        justifyContent="space-between" 
+                        alignItems={isMobile ? 'flex-start' : 'center'} 
+                        mb={3}
+                        gap={2}
+                    >
+                        <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold" color="primary">
+                            Recent Applications
+                        </Typography>
+                        <Button 
+                            variant="contained" 
+                            color="primary"
+                            startIcon={<AddIcon />}
+                            onClick={handleAddNew}
+                            fullWidth={isMobile}
+                            sx={{ px: 3 }}
+                        >
+                            New Application
+                        </Button>
+                    </Box>
 
-            <JobDialog 
-                open={isDialogOpen} 
-                initialData={editingJob || undefined}
-                onClose={() => setIsDialogOpen(false)} 
-                onSubmit={handleSave} 
-            />
-        </Container>
+                    <TableContainer sx={{ overflowX: 'auto' }}>
+                        <Table size={isMobile ? 'small' : 'medium'}>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell sx={{ color: 'text.secondary', fontWeight: 'bold' }}>COMPANY</TableCell>
+                                    <TableCell sx={{ color: 'text.secondary', fontWeight: 'bold' }}>ROLE</TableCell>
+                                    <TableCell sx={{ color: 'text.secondary', fontWeight: 'bold' }}>STATUS</TableCell>
+                                    <TableCell sx={{ color: 'text.secondary', fontWeight: 'bold' }}>LOCATION</TableCell>
+                                    <TableCell align="right" sx={{ color: 'text.secondary', fontWeight: 'bold' }}>ACTIONS</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {applications.map((app) => (
+                                    <TableRow key={app.id} hover>
+                                        <TableCell sx={{ fontWeight: 500 }}>{app.companyName}</TableCell>
+                                        <TableCell>{app.jobTitle}</TableCell>
+                                        <TableCell>
+                                            <Chip 
+                                                label={app.status} 
+                                                color={
+                                                    app.status === 'Offer' ? 'success' : 
+                                                    app.status.includes('Interview') ? 'warning' : 
+                                                    app.status === 'Rejected' ? 'error' : 'default'
+                                                }
+                                                size="small" 
+                                                variant="outlined"
+                                                sx={{ fontWeight: 'bold' }}
+                                            />
+                                        </TableCell>
+                                        <TableCell>{app.location || 'Remote'}</TableCell>
+                                        <TableCell align="right">
+                                            <Box display="flex" justifyContent="flex-end">
+                                                <IconButton onClick={() => handleEdit(app)} size="small" sx={{ mr: 1 }}>
+                                                    <EditIcon fontSize="small" />
+                                                </IconButton>
+                                                <IconButton color="error" onClick={() => handleDelete(app.id)} size="small">
+                                                    <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                            </Box>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </Paper>
+
+                <JobDialog 
+                    open={isDialogOpen} 
+                    initialData={editingJob || undefined}
+                    onClose={() => setIsDialogOpen(false)} 
+                    onSubmit={handleSave} 
+                />
+            </Container>
+        </Box>
     );
 }
