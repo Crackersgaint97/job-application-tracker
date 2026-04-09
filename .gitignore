@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Project-specific local env files
+EnterpriseApp.Client/.env
+
 # User-specific files
 *.rsuser
 *.suo
@@ -482,3 +485,8 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# --- EnterpriseApp project hygiene ---
+EnterpriseApp.Api/EnterpriseApp.db
+EnterpriseApp.Api/publish/
+EnterpriseApp.Api/publish/**
